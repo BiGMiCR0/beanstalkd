@@ -99,6 +99,7 @@ usage(int code)
     fprintf(stderr, "Use: %s [OPTIONS]\n"
             "\n"
             "Options:\n"
+            " -A NAME  Announce when a new tube is created on tube [NAME] \n"
             " -b DIR   write-ahead log directory\n"
             " -f MS    fsync at most once every MS milliseconds"
                        " (use -f0 for \"always fsync\")\n"
@@ -153,6 +154,10 @@ optparse(Server *s, char **argv)
     while ((arg = *argv++) && *arg++ == '-' && *arg) {
         while ((c = *arg++)) {
             switch (c) {
+                case 'A':
+                    s->wal.duplicate = 1;
+                    s->wal.duplicatename = EARGF(flagusage("-A"));
+                    break;
                 case 'p':
                     s->port = EARGF(flagusage("-p"));
                     warn_systemd_ignored_option("-p", s->port);

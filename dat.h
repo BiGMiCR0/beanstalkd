@@ -335,6 +335,8 @@ struct Wal {
     int64  syncrate;
     int64  lastsync;
     int    nocomp; // disable binlog compaction?
+    int    duplicate;
+    char   *duplicatename;
 };
 int  waldirlock(Wal*);
 void walinit(Wal*, job list);

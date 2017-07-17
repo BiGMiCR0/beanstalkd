@@ -1193,6 +1193,7 @@ dispatch_cmd(Conn *c)
     int64 delay, ttr;
     uint64 id;
     tube t = NULL;
+    int is_new_tube = 0;
 
     /* NUL-terminate this string so we can use strtol and friends */
     c->cmd[c->cmd_len - 2] = '\0';
@@ -1525,6 +1526,12 @@ dispatch_cmd(Conn *c)
         if (!name_is_ok(name, 200)) return reply_msg(c, MSG_BAD_FORMAT);
         op_ct[type]++;
 
+		if (!tube_find(name)) {
+			is_new_tube = 1;
+		}else{
+			is_new_tube = 0;
+		}
+
         TUBE_ASSIGN(t, tube_find_or_make(name));
         if (!t) return reply_serr(c, MSG_OUT_OF_MEMORY);
 
@@ -1534,6 +1541,17 @@ dispatch_cmd(Conn *c)
         c->use->using_ct++;
 
         reply_line(c, STATE_SENDWORD, "USING %s\r\n", c->use->name);
+
+        if (is_new_tube == 1){
+            if (c->srv->wal.duplicate){
+                TUBE_ASSIGN(t, tube_find_or_make(c->srv->wal.duplicatename));
+                connsetproducer(c);
+                c->in_job = make_job(5, 0, 1000000000, strlen(strcat(name , "\r\n")) , t);
+                memcpy(c->in_job->body, strcat(name , "\r\n"), strlen(strcat(name , "\r\n")) );
+                enqueue_incoming_job(c);
+                TUBE_ASSIGN(t, NULL);
+            }
+        }
         break;
     case OP_WATCH:
         name = c->cmd + CMD_WATCH_LEN;
