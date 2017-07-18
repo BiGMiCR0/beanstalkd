@@ -1546,7 +1546,7 @@ dispatch_cmd(Conn *c)
             if (c->srv->wal.duplicate){
                 TUBE_ASSIGN(t, tube_find_or_make(c->srv->wal.duplicatename));
                 connsetproducer(c);
-                c->in_job = make_job(5, 0, 1000000000, strlen(strcat(name , "\r\n")) , t);
+                c->in_job = make_job(5, 0, 1000000000, strlen(strcat(name , "\r\n")) + 2 , t);
                 memcpy(c->in_job->body, strcat(name , "\r\n"), strlen(strcat(name , "\r\n")) );
                 enqueue_incoming_job(c);
                 TUBE_ASSIGN(t, NULL);
